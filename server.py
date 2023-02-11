@@ -1,4 +1,5 @@
 import json
+import datetime
 from flask import Flask,render_template,request,redirect,flash,url_for
 
 
@@ -27,8 +28,23 @@ def index():
 @app.route('/showSummary',methods=['POST'])
 def showSummary():
     try:
-        club = [club for club in clubs if club['email'] == request.form['email']][0]
-        return render_template('welcome.html',club=club,competitions=competitions)
+         competitions_with_valid_date = []
+         competitions_done = []
+         for comp in competitions:
+            date_str = str(comp['date'])
+            date_object = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+            if date_object > datetime.datetime.now():
+                comp['date'] = date_object
+                competitions_with_valid_date.append(comp)
+            else:
+                competitions_done.append(comp)
+        # Pour chaque élément club dans la liste clubs, si le champ email de l'élément club est égal 
+        # à la valeur du champ email du formulaire de la requête (request.form['email'])
+        # Si cette condition est vraie, l'élément club est ajouté à la nouvelle liste 
+        # Enfin, la variable club est assignée à l'élément de la nouvelle liste en utilisant l'index 0 ([0]) pour sélectionner le premier élément de la liste.
+         club = [club for club in clubs if club['email'] == request.form['email']][0]
+         return render_template('welcome.html',club=club,competitions=competitions_with_valid_date,competition_done=competitions_done)
+         
     except IndexError:
         erreur = 1
         return render_template('index.html',erreur=erreur)
