@@ -23,7 +23,7 @@ clubs = loadClubs()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+ return render_template('index.html',clubs=clubs)
 
 @app.route('/showSummary',methods=['POST'])
 def showSummary():
@@ -65,11 +65,60 @@ def book(competition,club):
 def purchasePlaces():
     competition = [c for c in competitions if c['name'] == request.form['competition']][0]
     club = [c for c in clubs if c['name'] == request.form['club']][0]
-    placesRequired = int(request.form['places'])
-    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesRequired
-    flash('Great-booking complete!')
-    return render_template('welcome.html', club=club, competitions=competitions)
+    competitions_with_valid_date = []
+    competitions_done = []
 
+    for comp in competitions:
+        date_str = str(comp['date'])
+        date_object = datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+        if date_object > datetime.datetime.now():
+            comp['date'] = date_object
+            competitions_with_valid_date.append(comp)
+        else:
+            competitions_done.append(comp)
+
+    # places = request.form.get('places')
+
+    # if places:
+    #     placesRequired = int(places)
+    #     if (placesRequired <= int(competition['numberOfPlaces']) and placesRequired > 0) and (int(club['points'])>0 and (int(club['points']) >= placesRequired and placesRequired <= 12)):
+    #         competition['numberOfPlaces'] = int(competition['numberOfPlaces']) - placesRequired
+    #         club['points'] = int(club['points']) - placesRequired
+    #         flash('Felicitation! vous venez de reserver {} places '.format(placesRequired))
+            
+               
+    #     else:
+    #         flash('echec lors de la reservation de {} places !'.format(placesRequired))
+    # else:
+    #     flash('Aucune place n\'a été sélectionnée!')
+    # return render_template('welcome.html', club=club, competitions=competitions_with_valid_date, competition_done=competitions_done)
+    
+    total_reserved = 0
+    places = request.form.get('places')
+
+    if places:
+        placesRequired = int(places)
+        if (placesRequired <= int(competition['numberOfPlaces']) and placesRequired > 0) and (int(club['points'])>0 and (int(club['points']) >= placesRequired)):
+            if total_reserved <= 12:
+                competition['numberOfPlaces'] = int(competition['numberOfPlaces']) - placesRequired
+                club['points'] = int(club['points']) - placesRequired
+                flash('Felicitation! vous venez de reserver {} places '.format(placesRequired))
+                total_reserved += placesRequired
+                         
+        else :
+            flash('Impossible de réserver plus de 12 places au total !')
+            # total_reserved -= placesRequired
+            
+        
+            
+             
+        
+    else:
+        flash('Aucune place n\'a été sélectionnée!')
+        
+        
+    return render_template('welcome.html', club=club, competitions=competitions_with_valid_date, competition_done=competitions_done)
+    
 
 # TODO: Add route for points display
 
